@@ -58,6 +58,11 @@ pip install -r requirements.txt
 ```bash
 python app.py
 ```
+or WSGI Server (gunicorn, could use Waitress if on Windows):
+```bash
+python -m gunicorn -w 1 app:app
+```
+
 
 2. **Access the Application:** 
 

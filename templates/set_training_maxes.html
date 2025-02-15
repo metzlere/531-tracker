@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Set Training Maxes</h1>
+<form method="POST">
+    {% for lift in lifts %}
+    <div>
+        <label for="{{ lift }}">{{ lift }} One Rep Max:</label>
+        <input type="text" id="{{ lift }}" name="{{ lift }}" placeholder="Enter your 1RM for {{ lift }}">
+    </div>
+    {% endfor %}
+    <button type="submit">Submit</button>
+</form>
+{% endblock %}

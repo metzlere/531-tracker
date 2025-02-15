@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Update Entry (ID: {{ entry[0] }})</h2>
+    <form method="POST">
+        <label>New Weight:</label>
+        <input type="text" name="new_weight" placeholder="{{ entry[3] }}">
+        <br>
+        <label>New Reps:</label>
+        <input type="text" name="new_reps" placeholder="{{ entry[4] }}">
+        <br>
+        <button type="submit">Update</button>
+    </form>
+{% endblock %}

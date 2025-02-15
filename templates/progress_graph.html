@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Progress Graph</h2>
+    <form method="POST">
+        <label>Select an exercise:</label>
+        <select name="exercise">
+            {% for ex in exercises %}
+                <option value="{{ ex }}" {% if selected_exercise == ex %}selected{% endif %}>{{ ex }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">View Graph</button>
+    </form>
+    {% if graph_html %}
+        <h3>Progress for {{ selected_exercise }}</h3>
+        <!-- Embed the interactive Plotly graph -->
+        <div>{{ graph_html | safe }}</div>
+    {% endif %}
+{% endblock %}

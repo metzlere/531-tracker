@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Training Maxes History</h2>
+    <table border="1">
+        <tr>
+            <th>Date</th>
+            <th>Exercise</th>
+            <th>1RM</th>
+            <th>Training Max</th>
+        </tr>
+        {% for row in tms %}
+        <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>5/3/1 Workout Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>5/3/1 Workout Tracker</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a> |
+            <a href="{{ url_for('set_training_maxes') }}">Set Training Maxes</a> |
+            <a href="{{ url_for('view_training_maxes') }}">View Training Maxes</a> |
+            <a href="{{ url_for('start_workout') }}">Start Workout</a> |
+            <a href="{{ url_for('history') }}">Workout History</a> |
+            <a href="{{ url_for('correct_mistake') }}">Correct Mistakes</a> |
+            <a href="{{ url_for('volume_history') }}">Volume History</a> |
+            <a href="{{ url_for('progress_graph') }}">Progress Graph</a>
+        </nav>
+    </header>
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+              <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

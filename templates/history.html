@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Workout History</h2>
+    <table border="1">
+        <tr>
+            <th>Date</th>
+            <th>Exercise</th>
+            <th>Weight (lbs)</th>
+            <th>Reps</th>
+        </tr>
+        {% for rec in records %}
+        <tr>
+            <td>{{ rec[1] }}</td>
+            <td>{{ rec[2] }}</td>
+            <td>{{ rec[3] }}</td>
+            <td>{{ rec[4] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Correct Mistakes</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Exercise</th>
+            <th>Weight</th>
+            <th>Reps</th>
+            <th>Actions</th>
+        </tr>
+        {% for rec in records %}
+        <tr>
+            <td>{{ rec[0] }}</td>
+            <td>{{ rec[1] }}</td>
+            <td>{{ rec[2] }}</td>
+            <td>{{ rec[3] }}</td>
+            <td>{{ rec[4] }}</td>
+            <td>
+                <a href="{{ url_for('update_entry', entry_id=rec[0]) }}">Update</a> |
+                <form action="{{ url_for('delete_entry', entry_id=rec[0]) }}" method="POST" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Are you sure?')">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Volume History (Total Sets by Body Part)</h2>
+    {% for week in weeks %}
+        <h3>{{ week.start }} to {{ week.end }}</h3>
+        {% if week.volume %}
+            <ul>
+            {% for body_part, sets in week.volume.items() %}
+                <li>{{ body_part }}: {{ sets }} sets</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No data for this week.</p>
+        {% endif %}
+    {% endfor %}
+{% endblock %}

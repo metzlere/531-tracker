@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Add Accessory Work</h2>
+    <form method="POST">
+        <label>Accessory Exercise Name:</label>
+        <input type="text" name="exercise" required>
+        <br>
+        <label>Weight Used (lbs):</label>
+        <input type="text" name="weight" required>
+        <br>
+        <label>Reps:</label>
+        <input type="text" name="reps" required>
+        <br>
+        <label>If new exercise, enter primary body part (optional):</label>
+        <input type="text" name="body_part">
+        <br>
+        <button type="submit">Log Accessory Set</button>
+    </form>
+    {% if past_exercises %}
+        <h3>Past Accessory Exercises:</h3>
+        <ul>
+            {% for ex in past_exercises %}
+                <li>{{ ex }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

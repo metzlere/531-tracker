@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>{{ lift }} Workout</h2>
+    <p>Your training max for {{ lift }} is: {{ tm }} lbs.</p>
+    <form method="POST">
+        <!-- Include the week in a hidden field when submitting -->
+        <label>Select Week:</label>
+        <select id="week-select" name="week">
+            <option value="1" {% if selected_week=='1' %}selected{% endif %}>Week 1</option>
+            <option value="2" {% if selected_week=='2' %}selected{% endif %}>Week 2</option>
+            <option value="3" {% if selected_week=='3' %}selected{% endif %}>Week 3</option>
+        </select>
+        <br><br>
+        <h3>Enter the number of reps completed for each set:</h3>
+        <ul id="sets-list">
+            {% for i in range(3) %}
+                <li data-index="{{ i }}">
+                    Recommended: <span class="scheme">{{ reps_schemes[selected_week][i] }}</span> at 
+                    <span class="weight">{{ (tm * percentages[selected_week][i])|round(2) }}</span> lbs.
+                    <br>
+                    <label>Reps for set {{ i+1 }}:</label>
+                    <input type="text" name="set_{{ i+1 }}" required>
+                </li>
+            {% endfor %}
+        </ul>
+        <button type="submit">Submit Workout</button>
+    </form>
+    <script>
+        // Get our percentages and rep schemes from the server (embedded as JSON)
+        const percentages = {{ percentages|tojson }};
+        const repsSchemes = {{ reps_schemes|tojson }};
+        const tm = {{ tm }};
+        
+        const weekSelect = document.getElementById("week-select");
+        const setsList = document.getElementById("sets-list").children;
+        
+        // When the week selection changes, update the displayed recommended weights and rep schemes.
+        weekSelect.addEventListener("change", function(){
+            const selectedWeek = this.value;
+            for (let i = 0; i < setsList.length; i++) {
+                const li = setsList[i];
+                const newScheme = repsSchemes[selectedWeek][i];
+                const newWeight = (tm * percentages[selectedWeek][i]).toFixed(2);
+                li.querySelector(".scheme").textContent = newScheme;
+                li.querySelector(".weight").textContent = newWeight;
+            }
+        });
+    </script>
+{% endblock %}

@@ -2,6 +2,8 @@
 
 The **5/3/1 Workout Tracker** is a Flask-based web application designed to help you manage and track your strength training workouts based on Jim Wendler's 5/3/1 program. It provides features to set and view training maxes, log both main and accessory workouts, view workout history, correct mistakes, analyze weekly volume by body part, and visualize progress through interactive graphs.
 
+![A screenshot of the web application](images/app_screenshot.png)
+
 ## Features
 
 - **Training Max Management**  

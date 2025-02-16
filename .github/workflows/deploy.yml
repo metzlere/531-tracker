@@ -1,0 +1,36 @@
+name: Deploy Flask App to Raspberry Pi
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t myusername/flaskapp:${{ github.sha }} .
+      
+      - name: Login to Docker Hub
+        run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      - name: Push Docker image
+        run: docker push myusername/flaskapp:${{ github.sha }}
+
+      - name: Deploy to Raspberry Pi via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.PI_HOST }}
+          username: ${{ secrets.PI_USER }}
+          key: ${{ secrets.PI_SSH_KEY }}
+          script: |
+            docker pull myusername/flaskapp:${{ github.sha }}
+            docker stop flaskapp || true
+            docker rm flaskapp || true
+            docker run -d --name flaskapp -p 5000:5000 myusername/flaskapp:${{ github.sha }}

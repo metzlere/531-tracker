@@ -15,13 +15,13 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t myusername/flaskapp:${{ github.sha }} .
+          docker build -t ${{ secrets.DOCKER_REPO }}:${{ github.sha }} .
       
       - name: Login to Docker Hub
         run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
       - name: Push Docker image
-        run: docker push myusername/flaskapp:${{ github.sha }}
+        run: docker push ${{ secrets.DOCKER_REPO }}:${{ github.sha }}
 
       - name: Deploy to Raspberry Pi via SSH
         uses: appleboy/ssh-action@v0.1.7
@@ -30,7 +30,7 @@ jobs:
           username: ${{ secrets.PI_USER }}
           key: ${{ secrets.PI_SSH_KEY }}
           script: |
-            docker pull myusername/flaskapp:${{ github.sha }}
-            docker stop flaskapp || true
-            docker rm flaskapp || true
-            docker run -d --name flaskapp -p 5000:5000 myusername/flaskapp:${{ github.sha }}
+            docker pull ${{ secrets.DOCKER_REPO }}:${{ github.sha }}
+            docker stop 531Tracker || true
+            docker rm 531Tracker || true
+            docker run -d --name 531Tracker -p 5000:5000 ${{ secrets.DOCKER_REPO }}:${{ github.sha }}

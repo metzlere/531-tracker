@@ -28,4 +28,4 @@ jobs:
           docker pull ${{ secrets.DOCKER_REPO }}:${{ github.sha }}
           docker stop 531Tracker || true
           docker rm 531Tracker || true
-          docker run -d --name 531Tracker -p 5000:5000 ${{ secrets.DOCKER_REPO }}:${{ github.sha }}
+          docker run -d --name 531Tracker -p 5000:5000 -v /home/pi/531-tracker/workout.db:/app/workout.db ${{ secrets.DOCKER_REPO }}:${{ github.sha }}

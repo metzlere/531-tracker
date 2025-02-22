@@ -192,3 +192,51 @@ li {
     max-width: 600px;
     color: #dcdcdc;
 }
+
+/* Container for accessory form and history */
+.accessory-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 60px;
+    margin-top: 20px;
+}
+
+/* Left side form container */
+.accessory-form {
+    flex: 1;
+    max-width: 600px;
+}
+
+/* Right side history container */
+.accessory-history {
+    flex: 2;
+    max-width: 70%;
+    font-size: 20px;
+}
+
+/* Scrollable history window */
+.history-scroll {
+    max-height: 600px;
+    overflow-y: auto;
+    background-color: #3a3a3a;
+    padding: 10px;
+    border: 1px solid #666;
+    border-radius: 4px;
+}
+
+/* Table styling for history table inside the scrollable window */
+.history-scroll table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.history-scroll th,
+.history-scroll td {
+    padding: 8px;
+    border: 1px solid #555;
+    text-align: left;
+}
+
+.history-scroll th {
+    background-color: #444;
+}

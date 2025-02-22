@@ -1,27 +1,52 @@
 {% extends "base.html" %}
 {% block content %}
-    <h2>Add Accessory Work</h2>
-    <form method="POST">
-        <label>Accessory Exercise Name:</label>
-        <input type="text" name="exercise" required>
-        <br>
-        <label>Weight Used (lbs):</label>
-        <input type="text" name="weight" required>
-        <br>
-        <label>Reps:</label>
-        <input type="text" name="reps" required>
-        <br>
-        <label>If new exercise, enter primary body part (optional):</label>
-        <input type="text" name="body_part">
-        <br>
-        <button type="submit">Log Accessory Set</button>
-    </form>
-    {% if past_exercises %}
-        <h3>Past Accessory Exercises:</h3>
-        <ul>
-            {% for ex in past_exercises %}
-                <li>{{ ex }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+<div class="accessory-container">
+    <div class="accessory-form">
+        <h2>Add Accessory Work</h2>
+        <form method="POST">
+            <label>Accessory Exercise Name:</label>
+            <input type="text" name="exercise" required>
+            <br>
+            <label>Weight Used (lbs):</label>
+            <input type="text" name="weight" required>
+            <br>
+            <label>Reps:</label>
+            <input type="text" name="reps" required>
+            <br>
+            <label>If new exercise, enter primary body part (optional):</label>
+            <input type="text" name="body_part">
+            <br>
+            <button type="submit">Log Accessory Set</button>
+        </form>
+    </div>
+    <div class="accessory-history">
+        <h3>Accessory Workout History</h3>
+        <div class="history-scroll">
+            {% if accessory_history %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Exercise</th>
+                            <th>Weight</th>
+                            <th>Reps</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rec in accessory_history %}
+                            <tr>
+                                <td>{{ rec[1] }}</td>
+                                <td>{{ rec[2] }}</td>
+                                <td>{{ rec[3] }}</td>
+                                <td>{{ rec[4] }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No accessory workout history available.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}

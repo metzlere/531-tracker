@@ -6,9 +6,7 @@ viewing history, correcting mistakes, viewing volume history, and generating pro
 """
 
 from datetime import datetime, date, timedelta
-import io
-import base64
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import plotly.graph_objects as go
 from flask import Flask, render_template, request, redirect, url_for, flash, Response
@@ -172,8 +170,7 @@ def perform_workout(lift: str) -> Response:
 def add_accessory() -> Response:
     """
     Log an accessory workout session.
-
-    GET: Render the accessory workout form.
+    GET: Render the accessory workout form along with accessory workout history.
     POST: Validate and log the accessory workout.
     """
     if request.method == "POST":
@@ -205,9 +202,12 @@ def add_accessory() -> Response:
 
         return redirect(url_for("add_accessory"))
 
-    # GET: Render the accessory form with past exercises
+    # GET: Render the accessory form along with accessory workout history.
     past_exercises: List[str] = db.get_past_accessory_exercises()
-    return render_template("add_accessory.html", past_exercises=past_exercises)
+    all_records: List[Any] = db.get_workout_history()
+    main_lifts: Tuple[str, str, str, str] = ("Squat", "Bench Press", "Deadlift", "Press")
+    accessory_history = [r for r in all_records if r[2] not in main_lifts]
+    return render_template("add_accessory.html", past_exercises=past_exercises, accessory_history=accessory_history)
 
 
 # -----------------------------------------------------------------------------

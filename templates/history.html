@@ -7,6 +7,7 @@
             <th>Exercise</th>
             <th>Weight (lbs)</th>
             <th>Reps</th>
+            <th>Duration</th>
         </tr>
         {% for rec in records %}
         <tr>
@@ -14,6 +15,16 @@
             <td>{{ rec[2] }}</td>
             <td>{{ rec[3] }}</td>
             <td>{{ rec[4] }}</td>
+            <td>
+                {% if rec[5] and rec[5] > 0 %}
+                    {% set hours = (rec[5] // 3600) %}
+                    {% set minutes = ((rec[5] % 3600) // 60) %}
+                    {% set seconds = (rec[5] % 60) %}
+                    {{ "%02d:%02d:%02d"|format(hours, minutes, seconds) }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </table>

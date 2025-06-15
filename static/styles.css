@@ -240,3 +240,47 @@ li {
 .history-scroll th {
     background-color: #444;
 }
+
+/* Multiple sets styling */
+.set-entry {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #3a3a3a;
+    border-radius: 4px;
+    border: 1px solid #555;
+}
+
+.set-entry label {
+    min-width: 60px;
+    margin: 0;
+    font-weight: bold;
+}
+
+.set-entry input[type="text"] {
+    width: 120px;
+    margin: 0;
+}
+
+.set-entry button {
+    background-color: #c62828;
+    color: white;
+    padding: 5px 10px;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.set-entry button:hover {
+    background-color: #b71c1c;
+}
+
+#sets-container {
+    margin: 15px 0;
+}
+
+#sets-container h4 {
+    color: #f1c40f;
+    margin-bottom: 10px;
+}

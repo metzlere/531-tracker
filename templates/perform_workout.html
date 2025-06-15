@@ -2,6 +2,16 @@
 {% block content %}
     <h2>{{ lift }} Workout</h2>
     <p>Your training max for {{ lift }} is: {{ tm }} lbs.</p>
+    
+    <!-- Stopwatch -->
+    <div id="stopwatch-container" style="background-color: #f4f4f4; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+        <h3>Workout Timer</h3>
+        <div id="stopwatch-display" style="font-family: monospace; font-size: 24px; font-weight: bold;">00:00:00</div>
+        <button type="button" id="start-btn" onclick="startStopwatch()">Start</button>
+        <button type="button" id="stop-btn" onclick="stopStopwatch()" disabled>Stop</button>
+        <button type="button" id="reset-btn" onclick="resetStopwatch()">Reset</button>
+    </div>
+    
     <form method="POST">
         <!-- Include the week in a hidden field when submitting -->
         <label>Select Week:</label>
@@ -23,6 +33,7 @@
                 </li>
             {% endfor %}
         </ul>
+        <input type="hidden" id="workout-duration" name="workout_duration" value="0">
         <button type="submit">Submit Workout</button>
     </form>
     <script>
@@ -43,6 +54,63 @@
                 const newWeight = (tm * percentages[selectedWeek][i]).toFixed(2);
                 li.querySelector(".scheme").textContent = newScheme;
                 li.querySelector(".weight").textContent = newWeight;
+            }
+        });
+
+        // Stopwatch functionality
+        let startTime = 0;
+        let elapsedTime = 0;
+        let timerInterval = null;
+        let isRunning = false;
+
+        function formatTime(milliseconds) {
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateStopwatch() {
+            elapsedTime = Date.now() - startTime;
+            document.getElementById('stopwatch-display').textContent = formatTime(elapsedTime);
+            document.getElementById('workout-duration').value = Math.floor(elapsedTime / 1000);
+        }
+
+        function startStopwatch() {
+            if (!isRunning) {
+                startTime = Date.now() - elapsedTime;
+                timerInterval = setInterval(updateStopwatch, 1000);
+                isRunning = true;
+                document.getElementById('start-btn').disabled = true;
+                document.getElementById('stop-btn').disabled = false;
+            }
+        }
+
+        function stopStopwatch() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                document.getElementById('start-btn').disabled = false;
+                document.getElementById('stop-btn').disabled = true;
+            }
+        }
+
+        function resetStopwatch() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            elapsedTime = 0;
+            document.getElementById('stopwatch-display').textContent = '00:00:00';
+            document.getElementById('workout-duration').value = '0';
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('stop-btn').disabled = true;
+        }
+
+        // Auto-stop timer when form is submitted
+        document.querySelector('form').addEventListener('submit', function() {
+            if (isRunning) {
+                stopStopwatch();
             }
         });
     </script>

@@ -141,6 +141,15 @@ def perform_workout(lift: str) -> Response:
             flash("Invalid week selected.", "error")
             return redirect(url_for("perform_workout", lift=lift))
 
+        # Get workout duration
+        workout_duration_str: Optional[str] = request.form.get("workout_duration")
+        workout_duration: Optional[int] = None
+        if workout_duration_str and workout_duration_str != "0":
+            try:
+                workout_duration = int(workout_duration_str)
+            except ValueError:
+                pass
+
         for idx in range(3):
             reps: Optional[str] = request.form.get(f"set_{idx+1}")
             if reps is None or reps == "":
@@ -148,7 +157,7 @@ def perform_workout(lift: str) -> Response:
                 return redirect(url_for("perform_workout", lift=lift))
 
             weight: float = tm * percentages[week][idx]
-            db.log_workout(datetime.now().date(), lift, weight, reps)
+            db.log_workout(datetime.now().date(), lift, weight, reps, workout_duration)
 
         flash("Workout logged successfully!", "success")
         return redirect(url_for("add_accessory"))
@@ -175,16 +184,25 @@ def add_accessory() -> Response:
     """
     if request.method == "POST":
         exercise: Optional[str] = request.form.get("exercise")
-        weight: Optional[str] = request.form.get("weight")
-        reps: Optional[str] = request.form.get("reps")
-        body_part: Optional[str] = request.form.get("body_part")  # Only needed if exercise is new
+        body_part: Optional[str] = request.form.get("body_part")
+        total_sets_str: Optional[str] = request.form.get("total_sets")
 
-        if not exercise or not weight or not reps:
-            flash("Please provide all required fields.", "error")
+        if not exercise:
+            flash("Please provide exercise name.", "error")
             return redirect(url_for("add_accessory"))
 
         try:
-            weight_val: float = float(weight)
+            total_sets = int(total_sets_str) if total_sets_str else 1
+            
+            # Get workout duration
+            workout_duration_str: Optional[str] = request.form.get("workout_duration")
+            workout_duration: Optional[int] = None
+            if workout_duration_str and workout_duration_str != "0":
+                try:
+                    workout_duration = int(workout_duration_str)
+                except ValueError:
+                    pass
+            
             # Check if exercise exists in exercises table
             bp: Optional[str] = db.get_exercise_body_part(exercise)
             if bp is None and not body_part:
@@ -193,12 +211,30 @@ def add_accessory() -> Response:
             elif bp is None:
                 db.add_exercise(exercise, body_part)
 
-            # Log accessory workout
-            db.log_workout(datetime.now().date(), exercise, weight_val, reps)
-            flash("Accessory work logged successfully!", "success")
+            # Process each set
+            sets_logged = 0
+            for set_num in range(1, total_sets + 1):
+                weight_str: Optional[str] = request.form.get(f"weight_{set_num}")
+                reps_str: Optional[str] = request.form.get(f"reps_{set_num}")
+                
+                if weight_str and reps_str:
+                    try:
+                        weight_val: float = float(weight_str)
+                        # Only assign workout duration to the first set to avoid duplication
+                        set_duration = workout_duration if set_num == 1 else None
+                        db.log_workout(datetime.now().date(), exercise, weight_val, reps_str, set_duration)
+                        sets_logged += 1
+                    except ValueError:
+                        flash(f"Invalid weight for set {set_num}. Please enter a number.", "error")
+                        return redirect(url_for("add_accessory"))
+                else:
+                    flash(f"Please provide weight and reps for set {set_num}.", "error")
+                    return redirect(url_for("add_accessory"))
+
+            flash(f"{sets_logged} set(s) logged successfully!", "success")
 
         except ValueError:
-            flash("Invalid weight. Please enter a number.", "error")
+            flash("Invalid data provided.", "error")
 
         return redirect(url_for("add_accessory"))
 

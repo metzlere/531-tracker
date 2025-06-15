@@ -56,7 +56,8 @@ class Database:
                    date TEXT, 
                    exercise TEXT, 
                    weight REAL, 
-                   reps TEXT
+                   reps TEXT,
+                   workout_duration INTEGER
                )"""
         )
 
@@ -66,6 +67,13 @@ class Database:
                    body_part TEXT
                )"""
         )
+
+        # Add workout_duration column if it doesn't exist (for migration)
+        try:
+            c.execute("ALTER TABLE workout_history ADD COLUMN workout_duration INTEGER")
+        except sqlite3.OperationalError:
+            # Column already exists or other error, ignore
+            pass
 
         self.conn.commit()
 
@@ -139,7 +147,7 @@ class Database:
     # -----------------------------------------------------------------------------
 
     def log_workout(
-        self, date_value: Any, exercise: str, weight: float, reps: str
+        self, date_value: Any, exercise: str, weight: float, reps: str, workout_duration: Optional[int] = None
     ) -> None:
         """
         Logs a workout session for the given exercise, weight, and reps.
@@ -149,13 +157,14 @@ class Database:
             exercise (str): The exercise name.
             weight (float): The weight used.
             reps (str): The number of repetitions (as a string).
+            workout_duration (Optional[int]): Duration of workout in seconds.
         """
         c = self.conn.cursor()
 
         c.execute(
-            """INSERT INTO workout_history (date, exercise, weight, reps)
-               VALUES (?, ?, ?, ?)""",
-            (date_value, exercise, weight, reps),
+            """INSERT INTO workout_history (date, exercise, weight, reps, workout_duration)
+               VALUES (?, ?, ?, ?, ?)""",
+            (date_value, exercise, weight, reps, workout_duration),
         )
 
         self.conn.commit()
@@ -172,7 +181,7 @@ class Database:
         c = self.conn.cursor()
 
         c.execute(
-            """SELECT id, date, exercise, weight, reps 
+            """SELECT id, date, exercise, weight, reps, workout_duration 
                FROM workout_history 
                ORDER BY date DESC, id DESC"""
         )
@@ -351,7 +360,7 @@ class Database:
         c = self.conn.cursor()
 
         c.execute(
-            """SELECT date, exercise, weight, reps FROM workout_history
+            """SELECT date, exercise, weight, reps, workout_duration FROM workout_history
                WHERE exercise = ? ORDER BY date""",
             (exercise,),
         )

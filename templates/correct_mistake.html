@@ -8,6 +8,7 @@
             <th>Exercise</th>
             <th>Weight</th>
             <th>Reps</th>
+            <th>Duration</th>
             <th>Actions</th>
         </tr>
         {% for rec in records %}
@@ -17,6 +18,16 @@
             <td>{{ rec[2] }}</td>
             <td>{{ rec[3] }}</td>
             <td>{{ rec[4] }}</td>
+            <td>
+                {% if rec[5] and rec[5] > 0 %}
+                    {% set hours = (rec[5] // 3600) %}
+                    {% set minutes = ((rec[5] % 3600) // 60) %}
+                    {% set seconds = (rec[5] % 60) %}
+                    {{ "%02d:%02d:%02d"|format(hours, minutes, seconds) }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
             <td>
                 <a href="{{ url_for('update_entry', entry_id=rec[0]) }}">Update</a> |
                 <form action="{{ url_for('delete_entry', entry_id=rec[0]) }}" method="POST" style="display:inline;">

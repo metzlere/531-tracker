@@ -3,20 +3,40 @@
 <div class="accessory-container">
     <div class="accessory-form">
         <h2>Add Accessory Work</h2>
+        
+        <!-- Stopwatch -->
+        <div id="stopwatch-container" style="background-color: #f4f4f4; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+            <h3>Workout Timer</h3>
+            <div id="stopwatch-display" style="font-family: monospace; font-size: 24px; font-weight: bold;">00:00:00</div>
+            <button type="button" id="start-btn" onclick="startStopwatch()">Start</button>
+            <button type="button" id="stop-btn" onclick="stopStopwatch()" disabled>Stop</button>
+            <button type="button" id="reset-btn" onclick="resetStopwatch()">Reset</button>
+        </div>
+        
         <form method="POST">
             <label>Accessory Exercise Name:</label>
-            <input type="text" name="exercise" required>
-            <br>
-            <label>Weight Used (lbs):</label>
-            <input type="text" name="weight" required>
-            <br>
-            <label>Reps:</label>
-            <input type="text" name="reps" required>
-            <br>
+            <input type="text" id="exercise-name" name="exercise" required>
+            <br><br>
             <label>If new exercise, enter primary body part (optional):</label>
             <input type="text" name="body_part">
-            <br>
-            <button type="submit">Log Accessory Set</button>
+            <br><br>
+            
+            <div id="sets-container">
+                <h4>Sets:</h4>
+                <div class="set-entry" data-set="1">
+                    <label>Set 1:</label>
+                    <input type="text" name="weight_1" placeholder="Weight (lbs)" required>
+                    <input type="text" name="reps_1" placeholder="Reps" required>
+                    <button type="button" onclick="removeSet(1)" style="display:none;">Remove</button>
+                </div>
+            </div>
+            
+            <button type="button" onclick="addSet()">Add Another Set</button>
+            <br><br>
+            
+            <input type="hidden" id="workout-duration" name="workout_duration" value="0">
+            <input type="hidden" id="total-sets" name="total_sets" value="1">
+            <button type="submit">Log All Sets</button>
         </form>
     </div>
     <div class="accessory-history">
@@ -30,6 +50,7 @@
                             <th>Exercise</th>
                             <th>Weight</th>
                             <th>Reps</th>
+                            <th>Duration</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -39,6 +60,16 @@
                                 <td>{{ rec[2] }}</td>
                                 <td>{{ rec[3] }}</td>
                                 <td>{{ rec[4] }}</td>
+                                <td>
+                                    {% if rec[5] and rec[5] > 0 %}
+                                        {% set hours = (rec[5] // 3600) %}
+                                        {% set minutes = ((rec[5] % 3600) // 60) %}
+                                        {% set seconds = (rec[5] % 60) %}
+                                        {{ "%02d:%02d:%02d"|format(hours, minutes, seconds) }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -49,4 +80,137 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Sets management
+    let setCount = 1;
+
+    function addSet() {
+        setCount++;
+        const setsContainer = document.getElementById('sets-container');
+        const newSetDiv = document.createElement('div');
+        newSetDiv.className = 'set-entry';
+        newSetDiv.setAttribute('data-set', setCount);
+        
+        newSetDiv.innerHTML = `
+            <label>Set ${setCount}:</label>
+            <input type="text" name="weight_${setCount}" placeholder="Weight (lbs)" required>
+            <input type="text" name="reps_${setCount}" placeholder="Reps" required>
+            <button type="button" onclick="removeSet(${setCount})">Remove</button>
+        `;
+        
+        setsContainer.appendChild(newSetDiv);
+        document.getElementById('total-sets').value = setCount;
+        
+        // Show remove button for first set if there are now multiple sets
+        if (setCount > 1) {
+            const firstSetRemoveBtn = document.querySelector('[data-set="1"] button[onclick="removeSet(1)"]');
+            if (firstSetRemoveBtn) {
+                firstSetRemoveBtn.style.display = 'inline';
+            }
+        }
+    }
+
+    function removeSet(setNumber) {
+        const setDiv = document.querySelector(`[data-set="${setNumber}"]`);
+        if (setDiv) {
+            setDiv.remove();
+            setCount--;
+            document.getElementById('total-sets').value = setCount;
+            
+            // Hide remove button for first set if it's now the only set
+            if (setCount === 1) {
+                const firstSetRemoveBtn = document.querySelector('[data-set="1"] button[onclick="removeSet(1)"]');
+                if (firstSetRemoveBtn) {
+                    firstSetRemoveBtn.style.display = 'none';
+                }
+            }
+            
+            // Renumber remaining sets
+            renumberSets();
+        }
+    }
+
+    function renumberSets() {
+        const setEntries = document.querySelectorAll('.set-entry');
+        setCount = 0;
+        
+        setEntries.forEach((setDiv, index) => {
+            setCount = index + 1;
+            setDiv.setAttribute('data-set', setCount);
+            
+            const label = setDiv.querySelector('label');
+            const weightInput = setDiv.querySelector('input[name^="weight_"]');
+            const repsInput = setDiv.querySelector('input[name^="reps_"]');
+            const removeBtn = setDiv.querySelector('button[onclick^="removeSet"]');
+            
+            if (label) label.textContent = `Set ${setCount}:`;
+            if (weightInput) weightInput.name = `weight_${setCount}`;
+            if (repsInput) repsInput.name = `reps_${setCount}`;
+            if (removeBtn) {
+                removeBtn.setAttribute('onclick', `removeSet(${setCount})`);
+                removeBtn.style.display = setCount === 1 && setEntries.length === 1 ? 'none' : 'inline';
+            }
+        });
+        
+        document.getElementById('total-sets').value = setCount;
+    }
+
+    // Stopwatch functionality
+    let startTime = 0;
+    let elapsedTime = 0;
+    let timerInterval = null;
+    let isRunning = false;
+
+    function formatTime(milliseconds) {
+        const totalSeconds = Math.floor(milliseconds / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function updateStopwatch() {
+        elapsedTime = Date.now() - startTime;
+        document.getElementById('stopwatch-display').textContent = formatTime(elapsedTime);
+        document.getElementById('workout-duration').value = Math.floor(elapsedTime / 1000);
+    }
+
+    function startStopwatch() {
+        if (!isRunning) {
+            startTime = Date.now() - elapsedTime;
+            timerInterval = setInterval(updateStopwatch, 1000);
+            isRunning = true;
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('stop-btn').disabled = false;
+        }
+    }
+
+    function stopStopwatch() {
+        if (isRunning) {
+            clearInterval(timerInterval);
+            isRunning = false;
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('stop-btn').disabled = true;
+        }
+    }
+
+    function resetStopwatch() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        elapsedTime = 0;
+        document.getElementById('stopwatch-display').textContent = '00:00:00';
+        document.getElementById('workout-duration').value = '0';
+        document.getElementById('start-btn').disabled = false;
+        document.getElementById('stop-btn').disabled = true;
+    }
+
+    // Auto-stop timer when form is submitted
+    document.querySelector('form').addEventListener('submit', function() {
+        if (isRunning) {
+            stopStopwatch();
+        }
+    });
+</script>
 {% endblock %}

@@ -14,6 +14,19 @@ from flask import Flask, render_template, request, redirect, url_for, flash, Res
 from workout_db import Database
 
 
+def round_to_nearest_2_5(weight: float) -> float:
+    """
+    Round weight to the nearest 2.5 increment.
+    
+    Args:
+        weight (float): The weight to round.
+        
+    Returns:
+        float: Weight rounded to nearest 2.5.
+    """
+    return round(weight / 2.5) * 2.5
+
+
 app = Flask(__name__)
 app.secret_key = "your_secret_key_here"  # Needed for flashing messages
 
@@ -156,7 +169,7 @@ def perform_workout(lift: str) -> Response:
                 flash("Please fill in all the set results.", "error")
                 return redirect(url_for("perform_workout", lift=lift))
 
-            weight: float = tm * percentages[week][idx]
+            weight: float = round_to_nearest_2_5(tm * percentages[week][idx])
             db.log_workout(datetime.now().date(), lift, weight, reps, workout_duration)
 
         flash("Workout logged successfully!", "success")

@@ -196,16 +196,14 @@ def add_accessory() -> Response:
     POST: Validate and log the accessory workout.
     """
     if request.method == "POST":
-        exercise: Optional[str] = request.form.get("exercise")
-        body_part: Optional[str] = request.form.get("body_part")
-        total_sets_str: Optional[str] = request.form.get("total_sets")
-
-        if not exercise:
-            flash("Please provide exercise name.", "error")
+        total_exercises_str: Optional[str] = request.form.get("total_exercises")
+        
+        if not total_exercises_str:
+            flash("Please provide the number of exercises.", "error")
             return redirect(url_for("add_accessory"))
 
         try:
-            total_sets = int(total_sets_str) if total_sets_str else 1
+            total_exercises = int(total_exercises_str)
             
             # Get workout duration
             workout_duration_str: Optional[str] = request.form.get("workout_duration")
@@ -216,35 +214,53 @@ def add_accessory() -> Response:
                 except ValueError:
                     pass
             
-            # Check if exercise exists in exercises table
-            bp: Optional[str] = db.get_exercise_body_part(exercise)
-            if bp is None and not body_part:
-                flash("New accessory exercise. Please enter the primary body part.", "error")
-                return redirect(url_for("add_accessory"))
-            elif bp is None:
-                db.add_exercise(exercise, body_part)
+            total_sets_logged = 0
+            
+            # Process each exercise
+            for exercise_num in range(1, total_exercises + 1):
+                exercise: Optional[str] = request.form.get(f"exercise_{exercise_num}")
+                body_part: Optional[str] = request.form.get(f"body_part_{exercise_num}")
+                total_sets_str: Optional[str] = request.form.get(f"total_sets_{exercise_num}")
 
-            # Process each set
-            sets_logged = 0
-            for set_num in range(1, total_sets + 1):
-                weight_str: Optional[str] = request.form.get(f"weight_{set_num}")
-                reps_str: Optional[str] = request.form.get(f"reps_{set_num}")
-                
-                if weight_str and reps_str:
-                    try:
-                        weight_val: float = float(weight_str)
-                        # Only assign workout duration to the first set to avoid duplication
-                        set_duration = workout_duration if set_num == 1 else None
-                        db.log_workout(datetime.now().date(), exercise, weight_val, reps_str, set_duration)
-                        sets_logged += 1
-                    except ValueError:
-                        flash(f"Invalid weight for set {set_num}. Please enter a number.", "error")
-                        return redirect(url_for("add_accessory"))
-                else:
-                    flash(f"Please provide weight and reps for set {set_num}.", "error")
+                if not exercise:
+                    flash(f"Please provide exercise name for exercise {exercise_num}.", "error")
                     return redirect(url_for("add_accessory"))
 
-            flash(f"{sets_logged} set(s) logged successfully!", "success")
+                try:
+                    total_sets = int(total_sets_str) if total_sets_str else 1
+                    
+                    # Check if exercise exists in exercises table
+                    bp: Optional[str] = db.get_exercise_body_part(exercise)
+                    if bp is None and not body_part:
+                        flash(f"New accessory exercise '{exercise}'. Please enter the primary body part.", "error")
+                        return redirect(url_for("add_accessory"))
+                    elif bp is None:
+                        db.add_exercise(exercise, body_part)
+
+                    # Process each set for this exercise
+                    for set_num in range(1, total_sets + 1):
+                        weight_str: Optional[str] = request.form.get(f"weight_{exercise_num}_{set_num}")
+                        reps_str: Optional[str] = request.form.get(f"reps_{exercise_num}_{set_num}")
+                        
+                        if weight_str and reps_str:
+                            try:
+                                weight_val: float = float(weight_str)
+                                # Only assign workout duration to the first set of the first exercise to avoid duplication
+                                set_duration = workout_duration if exercise_num == 1 and set_num == 1 else None
+                                db.log_workout(datetime.now().date(), exercise, weight_val, reps_str, set_duration)
+                                total_sets_logged += 1
+                            except ValueError:
+                                flash(f"Invalid weight for exercise '{exercise}', set {set_num}. Please enter a number.", "error")
+                                return redirect(url_for("add_accessory"))
+                        else:
+                            flash(f"Please provide weight and reps for exercise '{exercise}', set {set_num}.", "error")
+                            return redirect(url_for("add_accessory"))
+
+                except ValueError:
+                    flash(f"Invalid data provided for exercise {exercise_num}.", "error")
+                    return redirect(url_for("add_accessory"))
+
+            flash(f"{total_sets_logged} set(s) across {total_exercises} exercise(s) logged successfully!", "success")
 
         except ValueError:
             flash("Invalid data provided.", "error")

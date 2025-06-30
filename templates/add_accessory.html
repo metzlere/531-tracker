@@ -14,29 +14,40 @@
         </div>
         
         <form method="POST">
-            <label>Accessory Exercise Name:</label>
-            <input type="text" id="exercise-name" name="exercise" required>
-            <br><br>
-            <label>If new exercise, enter primary body part (optional):</label>
-            <input type="text" name="body_part">
-            <br><br>
-            
-            <div id="sets-container">
-                <h4>Sets:</h4>
-                <div class="set-entry" data-set="1">
-                    <label>Set 1:</label>
-                    <input type="text" name="weight_1" placeholder="Weight (lbs)" required>
-                    <input type="text" name="reps_1" placeholder="Reps" required>
-                    <button type="button" onclick="removeSet(1)" style="display:none;">Remove</button>
+            <div id="exercises-container">
+                <div class="exercise-block" data-exercise="1">
+                    <h3>Exercise 1</h3>
+                    <label>Exercise Name:</label>
+                    <input type="text" name="exercise_1" required>
+                    <br><br>
+                    <label>If new exercise, enter primary body part (optional):</label>
+                    <input type="text" name="body_part_1">
+                    <br><br>
+                    
+                    <div class="sets-container" data-exercise="1">
+                        <h4>Sets:</h4>
+                        <div class="set-entry" data-exercise="1" data-set="1">
+                            <label>Set 1:</label>
+                            <input type="text" name="weight_1_1" placeholder="Weight (lbs)" required>
+                            <input type="text" name="reps_1_1" placeholder="Reps" required>
+                            <button type="button" onclick="removeSet(1, 1)" style="display:none;">Remove</button>
+                        </div>
+                    </div>
+                    
+                    <button type="button" onclick="addSet(1)">Add Another Set</button>
+                    <input type="hidden" name="total_sets_1" value="1">
+                    <br><br>
+                    <button type="button" onclick="removeExercise(1)" style="display:none;">Remove Exercise</button>
+                    <hr>
                 </div>
             </div>
             
-            <button type="button" onclick="addSet()">Add Another Set</button>
+            <button type="button" onclick="addExercise()">Add Another Exercise</button>
             <br><br>
             
             <input type="hidden" id="workout-duration" name="workout_duration" value="0">
-            <input type="hidden" id="total-sets" name="total_sets" value="1">
-            <button type="submit">Log All Sets</button>
+            <input type="hidden" id="total-exercises" name="total_exercises" value="1">
+            <button type="submit">Log All Exercises</button>
         </form>
     </div>
     <div class="accessory-history">
@@ -82,78 +93,204 @@
 </div>
 
 <script>
-    // Sets management
-    let setCount = 1;
+    // Exercise and sets management
+    let exerciseCount = 1;
+    let setCounts = {1: 1};
 
-    function addSet() {
-        setCount++;
-        const setsContainer = document.getElementById('sets-container');
+    function addExercise() {
+        exerciseCount++;
+        setCounts[exerciseCount] = 1;
+        
+        const exercisesContainer = document.getElementById('exercises-container');
+        const newExerciseDiv = document.createElement('div');
+        newExerciseDiv.className = 'exercise-block';
+        newExerciseDiv.setAttribute('data-exercise', exerciseCount);
+        
+        newExerciseDiv.innerHTML = `
+            <h3>Exercise ${exerciseCount}</h3>
+            <label>Exercise Name:</label>
+            <input type="text" name="exercise_${exerciseCount}" required>
+            <br><br>
+            <label>If new exercise, enter primary body part (optional):</label>
+            <input type="text" name="body_part_${exerciseCount}">
+            <br><br>
+            
+            <div class="sets-container" data-exercise="${exerciseCount}">
+                <h4>Sets:</h4>
+                <div class="set-entry" data-exercise="${exerciseCount}" data-set="1">
+                    <label>Set 1:</label>
+                    <input type="text" name="weight_${exerciseCount}_1" placeholder="Weight (lbs)" required>
+                    <input type="text" name="reps_${exerciseCount}_1" placeholder="Reps" required>
+                    <button type="button" onclick="removeSet(${exerciseCount}, 1)" style="display:none;">Remove</button>
+                </div>
+            </div>
+            
+            <button type="button" onclick="addSet(${exerciseCount})">Add Another Set</button>
+            <input type="hidden" name="total_sets_${exerciseCount}" value="1">
+            <br><br>
+            <button type="button" onclick="removeExercise(${exerciseCount})">Remove Exercise</button>
+            <hr>
+        `;
+        
+        exercisesContainer.appendChild(newExerciseDiv);
+        document.getElementById('total-exercises').value = exerciseCount;
+        
+        // Show remove button for first exercise if there are now multiple exercises
+        if (exerciseCount > 1) {
+            const firstExerciseRemoveBtn = document.querySelector('[data-exercise="1"] button[onclick="removeExercise(1)"]');
+            if (firstExerciseRemoveBtn) {
+                firstExerciseRemoveBtn.style.display = 'inline';
+            }
+        }
+    }
+
+    function removeExercise(exerciseNumber) {
+        const exerciseDiv = document.querySelector(`[data-exercise="${exerciseNumber}"]`);
+        if (exerciseDiv) {
+            exerciseDiv.remove();
+            delete setCounts[exerciseNumber];
+            exerciseCount--;
+            document.getElementById('total-exercises').value = exerciseCount;
+            
+            // Hide remove button for first exercise if it's now the only exercise
+            if (exerciseCount === 1) {
+                const firstExerciseRemoveBtn = document.querySelector('[data-exercise="1"] button[onclick="removeExercise(1)"]');
+                if (firstExerciseRemoveBtn) {
+                    firstExerciseRemoveBtn.style.display = 'none';
+                }
+            }
+            
+            // Renumber remaining exercises
+            renumberExercises();
+        }
+    }
+
+    function renumberExercises() {
+        const exerciseBlocks = document.querySelectorAll('.exercise-block');
+        exerciseCount = 0;
+        const newSetCounts = {};
+        
+        exerciseBlocks.forEach((exerciseDiv, index) => {
+            exerciseCount = index + 1;
+            const oldExerciseNumber = exerciseDiv.getAttribute('data-exercise');
+            exerciseDiv.setAttribute('data-exercise', exerciseCount);
+            
+            // Update exercise title
+            const title = exerciseDiv.querySelector('h3');
+            if (title) title.textContent = `Exercise ${exerciseCount}`;
+            
+            // Update exercise name input
+            const exerciseInput = exerciseDiv.querySelector('input[name^="exercise_"]');
+            if (exerciseInput) exerciseInput.name = `exercise_${exerciseCount}`;
+            
+            // Update body part input
+            const bodyPartInput = exerciseDiv.querySelector('input[name^="body_part_"]');
+            if (bodyPartInput) bodyPartInput.name = `body_part_${exerciseCount}`;
+            
+            // Update sets container
+            const setsContainer = exerciseDiv.querySelector('.sets-container');
+            if (setsContainer) {
+                setsContainer.setAttribute('data-exercise', exerciseCount);
+                renumberSetsInExercise(setsContainer, exerciseCount, oldExerciseNumber);
+            }
+            
+            // Update total sets hidden input
+            const totalSetsInput = exerciseDiv.querySelector('input[name^="total_sets_"]');
+            if (totalSetsInput) {
+                totalSetsInput.name = `total_sets_${exerciseCount}`;
+                totalSetsInput.value = newSetCounts[exerciseCount] || 1;
+            }
+            
+            // Update remove exercise button
+            const removeBtn = exerciseDiv.querySelector('button[onclick^="removeExercise"]');
+            if (removeBtn) {
+                removeBtn.setAttribute('onclick', `removeExercise(${exerciseCount})`);
+                removeBtn.style.display = exerciseCount === 1 && exerciseBlocks.length === 1 ? 'none' : 'inline';
+            }
+            
+            // Update add set button
+            const addSetBtn = exerciseDiv.querySelector('button[onclick^="addSet"]');
+            if (addSetBtn) {
+                addSetBtn.setAttribute('onclick', `addSet(${exerciseCount})`);
+            }
+        });
+        
+        setCounts = newSetCounts;
+        document.getElementById('total-exercises').value = exerciseCount;
+    }
+
+    function addSet(exerciseNumber) {
+        setCounts[exerciseNumber]++;
+        const setsContainer = document.querySelector(`[data-exercise="${exerciseNumber}"] .sets-container`);
         const newSetDiv = document.createElement('div');
         newSetDiv.className = 'set-entry';
-        newSetDiv.setAttribute('data-set', setCount);
+        newSetDiv.setAttribute('data-exercise', exerciseNumber);
+        newSetDiv.setAttribute('data-set', setCounts[exerciseNumber]);
         
         newSetDiv.innerHTML = `
-            <label>Set ${setCount}:</label>
-            <input type="text" name="weight_${setCount}" placeholder="Weight (lbs)" required>
-            <input type="text" name="reps_${setCount}" placeholder="Reps" required>
-            <button type="button" onclick="removeSet(${setCount})">Remove</button>
+            <label>Set ${setCounts[exerciseNumber]}:</label>
+            <input type="text" name="weight_${exerciseNumber}_${setCounts[exerciseNumber]}" placeholder="Weight (lbs)" required>
+            <input type="text" name="reps_${exerciseNumber}_${setCounts[exerciseNumber]}" placeholder="Reps" required>
+            <button type="button" onclick="removeSet(${exerciseNumber}, ${setCounts[exerciseNumber]})">Remove</button>
         `;
         
         setsContainer.appendChild(newSetDiv);
-        document.getElementById('total-sets').value = setCount;
+        document.querySelector(`input[name="total_sets_${exerciseNumber}"]`).value = setCounts[exerciseNumber];
         
         // Show remove button for first set if there are now multiple sets
-        if (setCount > 1) {
-            const firstSetRemoveBtn = document.querySelector('[data-set="1"] button[onclick="removeSet(1)"]');
+        if (setCounts[exerciseNumber] > 1) {
+            const firstSetRemoveBtn = setsContainer.querySelector('[data-set="1"] button[onclick^="removeSet"]');
             if (firstSetRemoveBtn) {
                 firstSetRemoveBtn.style.display = 'inline';
             }
         }
     }
 
-    function removeSet(setNumber) {
-        const setDiv = document.querySelector(`[data-set="${setNumber}"]`);
+    function removeSet(exerciseNumber, setNumber) {
+        const setDiv = document.querySelector(`[data-exercise="${exerciseNumber}"][data-set="${setNumber}"]`);
         if (setDiv) {
             setDiv.remove();
-            setCount--;
-            document.getElementById('total-sets').value = setCount;
+            setCounts[exerciseNumber]--;
+            document.querySelector(`input[name="total_sets_${exerciseNumber}"]`).value = setCounts[exerciseNumber];
             
             // Hide remove button for first set if it's now the only set
-            if (setCount === 1) {
-                const firstSetRemoveBtn = document.querySelector('[data-set="1"] button[onclick="removeSet(1)"]');
+            if (setCounts[exerciseNumber] === 1) {
+                const setsContainer = document.querySelector(`[data-exercise="${exerciseNumber}"] .sets-container`);
+                const firstSetRemoveBtn = setsContainer.querySelector('[data-set="1"] button[onclick^="removeSet"]');
                 if (firstSetRemoveBtn) {
                     firstSetRemoveBtn.style.display = 'none';
                 }
             }
             
-            // Renumber remaining sets
-            renumberSets();
+            // Renumber remaining sets in this exercise
+            const setsContainer = document.querySelector(`[data-exercise="${exerciseNumber}"] .sets-container`);
+            renumberSetsInExercise(setsContainer, exerciseNumber);
         }
     }
 
-    function renumberSets() {
-        const setEntries = document.querySelectorAll('.set-entry');
-        setCount = 0;
+    function renumberSetsInExercise(setsContainer, exerciseNumber, oldExerciseNumber = null) {
+        const setEntries = setsContainer.querySelectorAll('.set-entry');
+        setCounts[exerciseNumber] = 0;
         
         setEntries.forEach((setDiv, index) => {
-            setCount = index + 1;
-            setDiv.setAttribute('data-set', setCount);
+            setCounts[exerciseNumber] = index + 1;
+            setDiv.setAttribute('data-set', setCounts[exerciseNumber]);
             
             const label = setDiv.querySelector('label');
             const weightInput = setDiv.querySelector('input[name^="weight_"]');
             const repsInput = setDiv.querySelector('input[name^="reps_"]');
             const removeBtn = setDiv.querySelector('button[onclick^="removeSet"]');
             
-            if (label) label.textContent = `Set ${setCount}:`;
-            if (weightInput) weightInput.name = `weight_${setCount}`;
-            if (repsInput) repsInput.name = `reps_${setCount}`;
+            if (label) label.textContent = `Set ${setCounts[exerciseNumber]}:`;
+            if (weightInput) weightInput.name = `weight_${exerciseNumber}_${setCounts[exerciseNumber]}`;
+            if (repsInput) repsInput.name = `reps_${exerciseNumber}_${setCounts[exerciseNumber]}`;
             if (removeBtn) {
-                removeBtn.setAttribute('onclick', `removeSet(${setCount})`);
-                removeBtn.style.display = setCount === 1 && setEntries.length === 1 ? 'none' : 'inline';
+                removeBtn.setAttribute('onclick', `removeSet(${exerciseNumber}, ${setCounts[exerciseNumber]})`);
+                removeBtn.style.display = setCounts[exerciseNumber] === 1 && setEntries.length === 1 ? 'none' : 'inline';
             }
         });
         
-        document.getElementById('total-sets').value = setCount;
+        document.querySelector(`input[name="total_sets_${exerciseNumber}"]`).value = setCounts[exerciseNumber];
     }
 
     // Stopwatch functionality
